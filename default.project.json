@@ -1,0 +1,14 @@
+{
+  "name": "animator",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "luau-animator": { "$path": "luau-animator" },
+      "Runner" : {
+        "$path": "Runner.server.luau",
+        "$ignoreUnknownInstances": true
+      }
+    }
+  }
+}
