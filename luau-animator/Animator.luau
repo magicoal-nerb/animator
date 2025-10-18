@@ -72,7 +72,15 @@ export type Animator = typeof(setmetatable({} :: {
 }, Animator))
 
 local function getPose(poses: { AnimationPose }, t: number): (CFrame, number)
-	local j = #poses - 1
+	-- nobonet fix :D
+	local length = #poses
+	if length == 1 then
+		return poses[1].cframe, poses[1].weight
+	elseif length == 0 then
+		return CFrame.identity, 0.0
+	end
+
+	local j = length - 1
 	local i = 1
 	
 	-- binary search
@@ -85,6 +93,7 @@ local function getPose(poses: { AnimationPose }, t: number): (CFrame, number)
 		end
 	end
 	
+	-- left bound
 	while i > 1 and poses[i].t > t do
 		i -= 1
 	end
