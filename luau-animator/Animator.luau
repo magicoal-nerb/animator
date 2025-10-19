@@ -71,7 +71,7 @@ export type Animator = typeof(setmetatable(
 		queue: { number },
 	},
 	Animator
-))
+	))
 
 local function getPose(poses: { AnimationPose }, t: number): (CFrame, number)
 	if #poses == 1 then
@@ -256,19 +256,33 @@ function Animator.stopAnimation(self: Animator, playback: AnimationPlayback, fad
 end
 
 function Animator.playAnimation(self: Animator, playback: AnimationPlayback, fade: number?)
+	local animations = self.animations
+	local length = #animations
+
+	-- set playback properties
+	playback.targetWeight = 1.0
+	playback.speedWeight = 1.0 / (fade or 0.3)
+	playback.timer = 0.0
+	
 	if playback.playing then
 		-- just restart playback because
 		-- this is already playing
-		playback.timer = 0.0
+		local index = table.find(animations, playback) :: number
+		local read = index
+		
+		while read > 0 and animations[read].priority <= playback.priority do
+			read -= 1
+		end
+		
+		-- swap indexes 
+		read += 1
+		animations[index], animations[read] = animations[read], animations[index]
 		return
 	end
 
-	local animations = self.animations
-	local length = #animations
-	
 	local j = length
 	local i = 1
-
+	
 	-- binary search for insertion
 	while i < j do
 		local center = (i + j) // 2
@@ -278,19 +292,13 @@ function Animator.playAnimation(self: Animator, playback: AnimationPlayback, fad
 			j = center
 		end
 	end
-	
+
 	-- get left bound
-	while i > 1 and animations[i].priority >= playback.priority do
+	while i > 1 and animations[i].priority <= playback.priority do
 		i -= 1
 	end
-	
-	-- add to the animation table
-	playback.targetWeight = 1.0
-	playback.speedWeight = 1.0 / (fade or 0.3)
+
 	playback.playing = true
-
-	playback.timer = 0.0
-
 	table.insert(animations, i, playback)
 end
 
