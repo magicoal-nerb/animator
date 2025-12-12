@@ -104,6 +104,9 @@ return function(sequence: KeyframeSequence)
 			if not pose:IsA("Pose") then
 				-- not a pose
 				continue
+			elseif pose.Weight == 0 then
+				-- ignore 0 weight poses
+				continue
 			end
 			
 			-- add to the data
