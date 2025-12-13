@@ -1,7 +1,10 @@
 --!strict
 
+local KeyframeSequenceProvider = game:GetService("KeyframeSequenceProvider")
+local KeyframeCache = {} :: { [AnimationObject]: AnimationSequence }
 local Tween = require("./Tween")
 
+export type AnimationObject = KeyframeSequence | Animation | string
 export type AnimationPose = {
 	-- easing direction
 	tween: (t: number) -> (number),
@@ -16,7 +19,7 @@ export type AnimationPose = {
 	t: number,
 }
 
-export type AnimationTrack = {
+export type AnimationSequence = {
 	-- pose targets
 	data: { [string]: { AnimationPose } },
 	
@@ -24,7 +27,7 @@ export type AnimationTrack = {
 	length: number,
 
 	-- priority of the track
-	priority: number,
+	priority: Enum.AnimationPriority,
 
 	-- whether it is additive
 	additive: boolean,
@@ -89,13 +92,30 @@ local function createPose(pose: Pose, t: number): AnimationPose
 	}
 end
 
-return function(sequence: KeyframeSequence)
+local function createAnimation(object: AnimationObject)
+	if KeyframeCache[object] then
+		-- its in the cache already
+		return KeyframeCache[object]
+	end
+
+	local sequence: KeyframeSequence
+	if typeof(object) == "string" then
+		-- get the keyframe sequence
+		sequence = KeyframeSequenceProvider:GetKeyframeSequenceAsync(object)
+	elseif object:IsA("Animation") then
+		-- get the animation from the site
+		return createAnimation(object.AnimationId)
+	else
+		-- the keyframe sequence is the object itself
+		sequence = object
+	end
+
 	-- get the keyframes
 	local keyframes = sequence:GetKeyframes()
 	table.sort(keyframes, function(a: Keyframe, b: Keyframe)
 		return a.Time < b.Time
 	end)
-	
+
 	local data = {}
 	for i, keyframe in keyframes do
 		-- get the keyframe data
@@ -105,10 +125,9 @@ return function(sequence: KeyframeSequence)
 				-- not a pose
 				continue
 			elseif pose.Weight == 0 then
-				-- ignore 0 weight poses
 				continue
 			end
-			
+
 			-- add to the data
 			local name = pose.Name
 			if not data[name] then
@@ -118,22 +137,29 @@ return function(sequence: KeyframeSequence)
 			end
 		end
 	end
-	
+
 	-- create the animation track data
-	return {
+	local result = {
 		-- data
 		data = data,
-		
+
 		-- length in seconds
-		length = keyframes[#keyframes].Time - (1/60),
-		
+		length = if #keyframes == 0
+			then 0.1
+			else math.max(keyframes[#keyframes].Time - (1/60), 0.1),
+
 		-- priority of the track
-		priority = sequence.Priority.Value,
-		
+		priority = sequence.Priority,
+
 		-- whether it is additive
 		additive = false,
-		
+
 		-- whether it is looped
 		looped = sequence.Loop,
 	}
+	
+	KeyframeCache[object] = result
+	return result
 end
+
+return createAnimation

@@ -35,9 +35,7 @@ local function loadAnimations(
 	local output = {} :: { LuauAnimator.AnimationPlayback }
 	for i, id in animations do
 		-- Get the keyframe sequence
-		local animation = KeyframeSequenceProvider:GetKeyframeSequenceAsync(`rbxassetid://{id}`)
-		local animationTrack = createAnimation(animation)
-		output[i] = rig:loadAnimation(animationTrack)
+		output[i] = rig:LoadAnimation(`rbxassetid://{id}`)
 	end
 
 	return output
@@ -50,20 +48,21 @@ local Animations = loadAnimations(Rig, {
 	10714061912, -- curtsy
 	10921242013, -- jump
 	10921240218, -- walk
+	10921272275, -- idle
 })
 
 local function playNextAnimation()
 	-- just cycle through animations to test
 	-- playback
-	Rig:stopAnimation(Animations[Cursor], 0.3)
+	Animations[Cursor]:Stop(0.3)
 	
 	Cursor = (Cursor % #Animations) + 1
-	Rig:playAnimation(Animations[Cursor])
+	Animations[Cursor]:Play()
 end
 
 RunService.PreSimulation:Connect(function(dt)
 	dt = math.min(dt, 1/30)
-	Rig:update(dt)
+	Rig:StepAnimations(dt)
 end)
 
 while task.wait(1) do
