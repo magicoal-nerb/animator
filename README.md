@@ -1,5 +1,6 @@
 # animator
 *Reimplementation of Roblox's Animator system in typed Luau*   
+Now featuring, *replication!!*
 
 This project uses [Rojo](https://github.com/rojo-rbx/rojo) 7.5.1.
 
