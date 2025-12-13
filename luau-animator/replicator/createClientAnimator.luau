@@ -55,6 +55,16 @@ local function createActor(character: Model)
 		previous = {},
 		targets = {},
 	}
+
+	local connection: RBXScriptConnection
+	connection = character.AncestryChanged:Connect(function()
+		if character.Parent then
+			return
+		end
+		
+		Actors[id] = nil
+		connection = connection:Disconnect()
+	end)
 end
 
 local function readAnimationBuffer(
@@ -111,6 +121,10 @@ local function stepped()
 		for current, currentCFrame in actor.targets do
 			local previousCFrame = actor.previous[current] or currentCFrame
 			local bone = (bones[current].bone :: Motor6D)
+			if not bone then
+				continue
+			end
+			
 			bone.Transform = previousCFrame:Lerp(currentCFrame, alpha)
 		end
 	end

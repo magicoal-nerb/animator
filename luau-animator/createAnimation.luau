@@ -92,7 +92,7 @@ local function createPose(pose: Pose, t: number): AnimationPose
 	}
 end
 
-local function createAnimation(object: AnimationObject)
+local function createAnimation(object: AnimationObject): AnimationSequence
 	if KeyframeCache[object] then
 		-- its in the cache already
 		return KeyframeCache[object]

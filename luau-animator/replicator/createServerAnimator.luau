@@ -33,8 +33,14 @@ local function characterAdded(character: Model)
 	character:SetAttribute("Id", index)
 	character:AddTag("Animator")
 	
-	character.Destroying:Once(function()
+	local connection: RBXScriptConnection
+	connection = character.AncestryChanged:Connect(function()
+		if character.Parent then
+			return
+		end
+		
 		ServerAnimator.actors[index] = nil
+		connection = connection:Disconnect()
 	end)
 end
 
