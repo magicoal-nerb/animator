@@ -71,7 +71,7 @@ export type Animator = typeof(setmetatable(
 		queue: { number },
 	},
 	Animator
-	))
+))
 
 local function getPose(poses: { AnimationPose }, t: number): (CFrame, number)
 	if #poses == 1 then
@@ -79,31 +79,36 @@ local function getPose(poses: { AnimationPose }, t: number): (CFrame, number)
 	elseif #poses == 0 then
 		return CFrame.identity, 0.0
 	end
-
-	local j = #poses - 1
-	local i = 1
-
-	-- binary search
-	while i < j do
-		local center = (i + j) // 2
-		if poses[center].t < t then
-			i = center + 1
-		else
-			j = center
+	
+	-- left biased binary search
+	local length = #poses
+	local span = length
+	local left = 1
+	
+	while 1 < span do
+		span = bit32.rshift(span + 1, 1)
+		
+		local cursor = left + span
+		if length < cursor then
+			continue
+		elseif poses[cursor].t < t then
+			left = cursor
 		end
 	end
-
-	while i > 1 and poses[i].t > t do
-		i -= 1
-	end
-
+	
 	-- general case
-	local after = poses[i + 1]
-	local current = poses[i]
+	if left == length then
+		local finalPose = poses[left]
+		return finalPose.cframe, finalPose.weight
+	end
+	
+	local after = poses[left + 1]
+	local current = poses[left]
 
 	local param = math.min((t - current.t) / (after.t - current.t), 1.0)
 	local alpha = current.tween(param)
-	return current.cframe:Lerp(after.cframe, alpha), current.weight * (1.0 - alpha) + after.weight * alpha
+	return current.cframe:Lerp(after.cframe, alpha),
+		current.weight * (1.0 - alpha) + after.weight * alpha
 end
 
 local function getRoot(front: { [string]: RigBone }, reverse: { [string]: { string } }): string?
