@@ -8,7 +8,7 @@ export type AnimationPose = {
 
 	-- cframe
 	cframe: CFrame,
-	
+
 	-- weight
 	weight: number,
 
@@ -19,7 +19,7 @@ export type AnimationPose = {
 export type AnimationTrack = {
 	-- pose targets
 	data: { [string]: { AnimationPose } },
-	
+
 	-- length in seconds
 	length: number,
 
@@ -51,13 +51,13 @@ local PoseEasings = table.freeze({
 		[Enum.PoseEasingDirection.Out] = Tween.easeOutCubic,
 		[Enum.PoseEasingDirection.In] = Tween.easeInCubic,
 	},
-	
+
 	[Enum.PoseEasingStyle.Cubic] = {
 		[Enum.PoseEasingDirection.InOut] = Tween.easeInOutCubic,
 		[Enum.PoseEasingDirection.Out] = Tween.easeOutCubic,
 		[Enum.PoseEasingDirection.In] = Tween.easeInCubic,
 	},
-	
+
 	[Enum.PoseEasingStyle.Bounce] = {
 		[Enum.PoseEasingDirection.InOut] = Tween.easeInOutBounce,
 		[Enum.PoseEasingDirection.Out] = Tween.easeOutBounce,
@@ -73,17 +73,17 @@ local PoseEasings = table.freeze({
 
 local function createPose(pose: Pose, t: number): AnimationPose
 	local cframe = pose.CFrame
-	
+
 	return {
 		-- get the easing style
 		tween = PoseEasings[pose.EasingStyle][pose.EasingDirection],
-		
+
 		-- set the axis
 		cframe = cframe,
-		
+
 		-- weight
 		weight = pose.Weight,
-		
+
 		-- set the t
 		t = t,
 	}
@@ -95,7 +95,7 @@ return function(sequence: KeyframeSequence)
 	table.sort(keyframes, function(a: Keyframe, b: Keyframe)
 		return a.Time < b.Time
 	end)
-	
+
 	local data = {}
 	for i, keyframe in keyframes do
 		-- get the keyframe data
@@ -108,7 +108,7 @@ return function(sequence: KeyframeSequence)
 				-- ignore 0 weight poses
 				continue
 			end
-			
+
 			-- add to the data
 			local name = pose.Name
 			if not data[name] then
@@ -118,21 +118,21 @@ return function(sequence: KeyframeSequence)
 			end
 		end
 	end
-	
+
 	-- create the animation track data
 	return {
 		-- data
 		data = data,
-		
+
 		-- length in seconds
 		length = keyframes[#keyframes].Time - (1/60),
-		
+
 		-- priority of the track
 		priority = sequence.Priority.Value,
-		
+
 		-- whether it is additive
-		additive = false,
-		
+		additive = sequence:GetAttribute("Additive"),
+
 		-- whether it is looped
 		looped = sequence.Loop,
 	}

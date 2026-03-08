@@ -205,17 +205,17 @@ function Animator.getPlayingAnimations(self: Animator)
 	return self.animations
 end
 
-function Animator.new(rig: Model): Animator
+function Animator.new(rig: Model)
 	local order, bones = getRig(rig)
 	return setmetatable({
 		-- animations and queue
-		animations = {},
-		queue = {},
+		animations = {} :: { AnimationPlayback },
+		queue = {} :: { [string]: RigBone },
 
 		-- order, bones
 		order = order,
 		bones = bones,
-	}, Animator)
+	}, Animator) :: Animator
 end
 
 function Animator.loadAnimation(self: Animator, track: AnimationTrack): AnimationPlayback
@@ -235,7 +235,7 @@ function Animator.loadAnimation(self: Animator, track: AnimationTrack): Animatio
 		track = track,
 
 		-- config
-		additive = false,
+		additive = track.additive,
 		playing = false,
 	}
 end
@@ -289,18 +289,16 @@ function Animator.playAnimation(self: Animator, playback: AnimationPlayback, fad
 	local i = 1
 	
 	-- binary search for insertion
-	while i < j do
-		local center = (i + j) // 2
-		if animations[center].priority <= playback.priority then
-			i = center + 1
-		else
-			j = center
+	local span = length
+	while 1 < span do
+		span = bit32.rshift(span + 1, 1)
+		
+		local right = i + span
+		if length < right then
+			continue
+		elseif animations[right].priority >= playback.priority then
+			i = right
 		end
-	end
-
-	-- get left bound
-	while i > 1 and animations[i].priority <= playback.priority do
-		i -= 1
 	end
 
 	playback.playing = true
@@ -321,9 +319,6 @@ function Animator.updateAnimation(self: Animator, playback: AnimationPlayback, d
 		if not bone then
 			-- no bone found here
 			continue
-		elseif bone.weight <= 0 then
-			-- cannot update this bone
-			continue
 		end
 
 		-- update the final weight
@@ -332,7 +327,6 @@ function Animator.updateAnimation(self: Animator, playback: AnimationPlayback, d
 			else weight * boneWeight
 
 		local costWeight = if not playback.additive then finalWeight else 0
-
 		bone.weight -= costWeight
 		bone.cframe = CFrame.identity:Lerp(cframe, finalWeight) * bone.cframe
 	end
